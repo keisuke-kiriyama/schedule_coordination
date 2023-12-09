@@ -1,0 +1,2 @@
+# schedule_coordination
+スケジュール連携のスクリプト。SpreadSheetからGoogleカレンダーへの連携を行う。
