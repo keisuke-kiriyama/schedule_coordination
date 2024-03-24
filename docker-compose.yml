@@ -1,0 +1,11 @@
+version: '3'
+services:
+  app:
+    build: .
+    container_name: 'schedule-coordination'
+    volumes:
+      - ./src:/root/src
+      - ~/.credential:/root/credentials
+    working_dir: '/root/src'
+    tty: true
+    command: python lpp_sheets2calendar.py
