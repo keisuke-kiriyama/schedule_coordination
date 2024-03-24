@@ -8,7 +8,6 @@ import datetime
 def connect_gspread(jsonf,key):
   scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
   credentials = ServiceAccountCredentials.from_json_keyfile_name(jsonf, scope)
-
   gc = gspread.authorize(credentials)
   worksheet = gc.open_by_key(key).sheet1
   return worksheet
@@ -60,7 +59,6 @@ def get_schedule(data, summaryPrefix):
       },
       })
     
-# Google Calendarに登録されているイベントを削除
 def delete_events(calendar, calendarId, summaryPrefix):
   events_result = calendar.events().list(
     calendarId=calendarId, 
@@ -77,14 +75,12 @@ def delete_events(calendar, calendarId, summaryPrefix):
   batch.execute()
   print("LPP events deleted: %d" % len(events))
     
-# Google Calendarに予定を登録する
 def register_event(calendar, schedule, calendarId):
   def callback(request_id, response, exception):
     if exception is not None:
       print(exception)
     else:
       print("Event created: %s" % response.get('htmlLink'))
-
   batch = calendar.new_batch_http_request(callback=callback)
   for event in schedule:
     batch.add(calendar.events().insert(calendarId=calendarId, body=event))
@@ -106,4 +102,3 @@ def main():
 
 if __name__ == '__main__':
   main()
-
