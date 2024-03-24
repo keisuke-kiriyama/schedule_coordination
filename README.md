@@ -19,3 +19,8 @@ docker compose exec app bash
 ```sh
 docker compose down
 ```
+
+## 備考
+
+一旦はマスタのシートを参照用シートにコピーしたものからGoogleカレンダーに連携。
+追ってマスタのシート参照しつつcronで定期更新されるようにする。
