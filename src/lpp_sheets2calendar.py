@@ -18,7 +18,7 @@ def connect_google_calendar(jsonf):
   calendar = build('calendar', 'v3', credentials=credentials)
   return calendar
 
-def get_schedule(data):
+def get_schedule(data, summaryPrefix):
   schedule = []
   year = '2024'
   for row in range(1,len(data)):
@@ -36,7 +36,7 @@ def get_schedule(data):
     date = year + '/' + re.match(date_pattern, data[row][0]).group()
     start_time = data[row][1]
     end_time = data[row][2]
-    summary = 'LPP: ' + data[row][3]
+    summary = summaryPrefix + data[row][3]
     location = data[row][4]
     station = '最寄駅: ' + data[row][5]
     if not date or not start_time or not end_time or not summary or not location or not station:
@@ -60,23 +60,50 @@ def get_schedule(data):
       },
       })
     
+# Google Calendarに登録されているイベントを削除
+def delete_events(calendar, calendarId, summaryPrefix):
+  events_result = calendar.events().list(
+    calendarId=calendarId, 
+    singleEvents=True,
+    orderBy='startTime'
+    ).execute()
+  events = events_result.get('items', [])
+
+  # summaryがsummaryPrefixで始まるイベントを一括削除
+  batch = calendar.new_batch_http_request()
+  for event in events:
+    if event['summary'].startswith(summaryPrefix):
+      batch.add(calendar.events().delete(calendarId=calendarId, eventId=event['id']))
+  batch.execute()
+  print("LPP events deleted: %d" % len(events))
+    
 # Google Calendarに予定を登録する
-def register_event(calendar, schedule):
+def register_event(calendar, schedule, calendarId):
+  def callback(request_id, response, exception):
+    if exception is not None:
+      print(exception)
+    else:
+      print("Event created: %s" % response.get('htmlLink'))
+
+  batch = calendar.new_batch_http_request(callback=callback)
   for event in schedule:
-    calendarId = 'c3a446e445fd0b159f9ba67960388269ed3815e731cd256c4cc842ba079dec39@group.calendar.google.com'
-    event = calendar.events().insert(calendarId=calendarId, body=event).execute()
-    print('Event created: %s' % (event.get('htmlLink')))
+    batch.add(calendar.events().insert(calendarId=calendarId, body=event))
+  batch.execute()
 
 def main():
   jsonf = '/root/credentials/schedule-coordination-ff9219425143.json'
   spread_sheet_key = '1BHU5xZGcGugcypEGQH9wKF0IiFyJEbfvoSOhfMtaHwg'
+  calendarId = 'c3a446e445fd0b159f9ba67960388269ed3815e731cd256c4cc842ba079dec39@group.calendar.google.com'
+  summaryPrefix = 'LPP: '
 
   worksheet = connect_gspread(jsonf, spread_sheet_key)
   data = worksheet.get_all_values()
-  schedule = get_schedule(data)
+  schedule = get_schedule(data, summaryPrefix)
 
   calendar = connect_google_calendar(jsonf)
-  register_event(calendar, schedule)
+  delete_events(calendar, calendarId, summaryPrefix)
+  register_event(calendar, schedule, calendarId)
 
 if __name__ == '__main__':
   main()
+
