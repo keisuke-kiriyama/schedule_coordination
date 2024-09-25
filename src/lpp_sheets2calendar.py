@@ -60,20 +60,25 @@ def get_schedule(data, summaryPrefix):
       })
     
 def delete_events(calendar, calendarId, summaryPrefix):
+  today = datetime.datetime.utcnow().isoformat() + 'Z'
   events_result = calendar.events().list(
     calendarId=calendarId, 
     singleEvents=True,
-    orderBy='startTime'
+    orderBy='startTime',
+    timeMin=today
     ).execute()
   events = events_result.get('items', [])
 
   # summaryがsummaryPrefixで始まるイベントを一括削除
   batch = calendar.new_batch_http_request()
+  deleted_count = 0
   for event in events:
     if event['summary'].startswith(summaryPrefix):
+      # print(event['summary'])
       batch.add(calendar.events().delete(calendarId=calendarId, eventId=event['id']))
+      deleted_count += 1
   batch.execute()
-  print("LPP events deleted: %d" % len(events))
+  print("LPP events deleted: %d" % deleted_count)
     
 def register_event(calendar, schedule, calendarId):
   def callback(request_id, response, exception):
@@ -90,7 +95,7 @@ def main():
   jsonf = '/root/credentials/schedule-coordination-ff9219425143.json'
   spread_sheet_key = '1BHU5xZGcGugcypEGQH9wKF0IiFyJEbfvoSOhfMtaHwg'
   calendarId = 'c3a446e445fd0b159f9ba67960388269ed3815e731cd256c4cc842ba079dec39@group.calendar.google.com'
-  summaryPrefix = 'LPP: '
+  summaryPrefix = 'LPP:'
 
   worksheet = connect_gspread(jsonf, spread_sheet_key)
   data = worksheet.get_all_values()
