@@ -19,9 +19,9 @@ def connect_google_calendar(jsonf):
 
 def get_schedule(data, summaryPrefix):
   schedule = []
-  year = '2024'
+  year = '2025'
   for row in range(1,len(data)):
-    # 2024年のみ抽出
+    # 2025年のみ抽出
     if data[row][0] == '↑' + year + '年':
       return schedule
 
